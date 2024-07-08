@@ -4,7 +4,7 @@ pipeline {
     environment {
         REPO_URL = 'https://github.com/Shiva833215/iam_aws_manage.git'
         BRANCH = 'main'
-        WORKSPACE_DIR = 'test5'
+        WORKSPACE_DIR = 'test7'
         AWS_DEFAULT_REGION = 'us-east-1'  // Adjust to your preferred region
     }
  
