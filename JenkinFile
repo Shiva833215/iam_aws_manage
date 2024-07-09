@@ -83,8 +83,6 @@ pipeline {
         }
     }
 
-    parameters {
-        // No parameters needed for this example
-    }
+ 
 }
 
