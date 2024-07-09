@@ -1,6 +1,6 @@
 pipeline {
     agent any
- 
+
     environment {
         REPO_URL = 'https://github.com/Shiva833215/iam_aws_manage.git'
         BRANCH = 'main'
@@ -9,7 +9,7 @@ pipeline {
     }
 
     stages {
-stage('Clone Repository') {
+        stage('Clone Repository') {
             steps {
                 script {
                     // Clone the repository
@@ -17,7 +17,7 @@ stage('Clone Repository') {
                 }
             }
         }
- 
+
         stage('Install Python3 and Boto3') {
             steps {
                 script {
@@ -31,29 +31,14 @@ stage('Clone Repository') {
                 }
             }
         }
-    
- 
- 
+
         stage('IAM Operations') {
             steps {
                 script {
-                    // Perform the selected IAM operation
-                    def cmd
-                    if (params.IAM_OPERATION == "create_policy") {
-                        cmd = "python3 opr.py create_policy ${params.POLICY_NAME}"
-                    } else if (params.IAM_OPERATION == "create_role") {
-                        cmd = "python3 opr.py create_role ${params.ROLE_NAME}"
-                    } else if (params.IAM_OPERATION == "delete_policy") {
-                        cmd = "python3 opr.py delete_policy ${params.POLICY_ARN}"
-                    } else if (params.IAM_OPERATION == "delete_role") {
-                        cmd = "python3 opr.py delete_role ${params.ROLE_NAME}"
-                    } else if (params.IAM_OPERATION == "attach_policy_to_role") {
-                        cmd = "python3 opr.py attach_policy_to_role ${params.ROLE_NAME} ${params.POLICY_ARN}"
-                    } else if (params.IAM_OPERATION == "detach_policy_from_role") {
-                        cmd = "python3 opr.py detach_policy_from_role ${params.ROLE_NAME} ${params.POLICY_ARN}"
-                    } else {
-                        error("Invalid operation specified")
-                    }
+                    // Iterate over multiple role names and policies
+                    def roles = ['Role1', 'Role2'] // Add more role names as needed
+                    def policies = ['Policy1', 'Policy2'] // Add more policy names as needed
+
                     // Use withCredentials to securely set AWS credentials
                     withCredentials([[
                         $class: 'AmazonWebServicesCredentialsBinding',
@@ -61,39 +46,45 @@ stage('Clone Repository') {
                         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
                         credentialsId: 'aws-credentials'
                     ]]) {
-                        sh """
-                            export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-                            export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-                            export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
-                            cd ${WORKSPACE_DIR}
-                            ${cmd}
-                        """
+                        // Perform IAM operations for each role and policy combination
+                        roles.each { roleName ->
+                            policies.each { policyName ->
+                                def cmd = "python3 oprs.py create_role ${roleName}"
+                                sh """
+                                    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                                    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+                                    export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+                                    cd ${WORKSPACE_DIR}
+                                    ${cmd}
+                                """
+
+                                cmd = "python3 oprs.py create_policy ${policyName}"
+                                sh """
+                                    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                                    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+                                    export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+                                    cd ${WORKSPACE_DIR}
+                                    ${cmd}
+                                """
+
+                                cmd = "python3 oprs.py attach_policy_to_role ${roleName} arn:aws:iam::123456789012:policy/${policyName}"
+                                sh """
+                                    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                                    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+                                    export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+                                    cd ${WORKSPACE_DIR}
+                                    ${cmd}
+                                """
+                            }
+                        }
                     }
                 }
             }
         }
     }
- 
+
     parameters {
-        choice(
-            name: 'IAM_OPERATION',
-            choices: ['create_policy', 'create_role', 'delete_policy', 'delete_role', 'attach_policy_to_role', 'detach_policy_from_role'],
-            description: 'Select the IAM operation to perform'
-        )
-        string(
-            name: 'ROLE_NAME',
-            defaultValue: 'ExampleRole',
-            description: 'Name of the IAM role'
-        )
-        string(
-            name: 'POLICY_NAME',
-            defaultValue: 'ExamplePolicy',
-            description: 'Name of the IAM policy'
-        )
-        string(
-            name: 'POLICY_ARN',
-            defaultValue: '',
-            description: 'ARN of the IAM policy'
-        )
+        // No parameters needed for this example
     }
 }
+
