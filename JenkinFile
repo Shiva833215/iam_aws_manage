@@ -7,7 +7,7 @@ pipeline {
         WORKSPACE_DIR = 'test8'
         AWS_DEFAULT_REGION = 'us-east-1'  // Adjust to your preferred region
     }
- 
+
     stages {
 stage('Clone Repository') {
             steps {
